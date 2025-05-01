@@ -555,6 +555,7 @@ impl<'conn, 'strct: 'conn> RfcParameter<'conn, 'strct> {
         Err(RfcErrorInfo::custom("Unknown field"))
     }
 
+    #[inline]
     pub fn get_field_by_index(
         &mut self,
         index: u32,

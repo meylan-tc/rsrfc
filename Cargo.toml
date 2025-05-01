@@ -2,8 +2,7 @@
 name = "rsrfc"
 version = "0.1.0"
 authors = ["Hans-Christian Esperer <hc@hcesperer.org>"]
-edition = "2018"
-build = "build.rs"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "lib"]
@@ -15,6 +14,7 @@ name = "rsrfctest"
 path = "src/main.rs"
 
 [dependencies]
-dlopen = "*"
-dlopen_derive = "*"
+dlopen = "0.1.8"
+dlopen_derive = "0.1.4"
 widestring = "0.4.0"
+log = "0.4.27"

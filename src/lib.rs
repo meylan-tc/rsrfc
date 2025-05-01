@@ -9,6 +9,7 @@ use widestring::*;
 pub mod connparams;
 pub mod error;
 mod rfc;
+pub mod rfc_helper;
 
 use crate::connparams::*;
 use crate::error::*;
