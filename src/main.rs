@@ -5,11 +5,11 @@ use rsrfc::error::RfcErrorInfo;
 
 fn main() -> Result<(), RfcErrorInfo>{
     let conn_params = RfcConnectionParameters {
-        ashost: "192.168.8.4",
+        ashost: "vhcala4hci",
         sysnr: "00",
-        client: "001",
-        user: "bobpage",
-        passwd: "Maggie8+Chow%-!",
+        client: "000",
+        user: "SAP*",
+        passwd: "ABAPtr2022#01",
         lang: "EN",
     };
 
@@ -38,6 +38,24 @@ fn main() -> Result<(), RfcErrorInfo>{
                 .ok_or(RfcErrorInfo::custom("unknown field QUERY_TABLE"))?;
             query_table.set_string("USR02")?;
         }
+        {
+            let delimiter = rfc_read_table
+                .get_mut_parameter("DELIMITER")
+                .ok_or(RfcErrorInfo::custom("unknown field DELIMITER"))?;
+            delimiter.set_string("\t")?;
+        }
+        {
+            let option = rfc_read_table
+                .get_mut_parameter("OPTIONS")
+                .ok_or(RfcErrorInfo::custom("unknown field OPTIONS"))?;
+            option.append_rows(1)?;
+            option.first_row();
+            let idx_fieldname = option
+                .get_field_index_by_name("TEXT")?;
+            let fieldname = option
+                .get_field_by_index(idx_fieldname)?;
+            fieldname.set_string("BNAME LIKE 'S%' AND USTYP = 'A'")?;
+        }
 
         // The field we are interested in is called BNAME.
         // Tell this to the RFC_READ_TABLE function.
@@ -46,12 +64,37 @@ fn main() -> Result<(), RfcErrorInfo>{
             .ok_or(RfcErrorInfo::custom("unknown field FIELDNAME"))?;
             let idx_fieldname = fields
                 .get_field_index_by_name("FIELDNAME")?;
-            fields.append_rows(1)?;
+            fields.append_rows(6)?;
             fields.first_row()?;
             let fieldname = fields
                 .get_field_by_index(idx_fieldname)?;
             fieldname
                 .set_string("BNAME")?;
+            fields.next_row()?;
+            let fieldname = fields
+                .get_field_by_index(idx_fieldname)?;
+            fieldname
+                .set_string("USTYP")?;
+            fields.next_row()?;
+            let fieldname = fields
+                .get_field_by_index(idx_fieldname)?;
+            fieldname
+                .set_string("GLTGV")?;
+            fields.next_row()?;
+            let fieldname = fields
+                .get_field_by_index(idx_fieldname)?;
+            fieldname
+                .set_string("GLTGB")?;
+            fields.next_row()?;
+            let fieldname = fields
+                .get_field_by_index(idx_fieldname)?;
+            fieldname
+                .set_string("UFLAG")?;
+            fields.next_row()?;
+            let fieldname = fields
+                .get_field_by_index(idx_fieldname)?;
+            fieldname
+                .set_string("CLASS")?;
         }
 
         // Call the function

@@ -1,3 +1,5 @@
+
+# Original readme, all credits goes to (C) 2019-2020, CaiberP GmbH. https://github.com/CaiberP/rsrfc
 Rust bindings to SAP's NW RFC library. This library aims to build safe
 bindings. This means that no operations are allowed that cause
 undefined behavior or access violations. This is, however, a
