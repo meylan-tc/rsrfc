@@ -6,6 +6,7 @@ use crate::RfcConnection;
 pub struct ResultSet {
     pub rows: Vec<String>,
     pub count: usize,
+    pub total: usize,
     pub has_more: bool,
 }
 
@@ -69,61 +70,45 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
 
     pub fn fetch(&self, page: Page) -> Result<ResultSet, RfcErrorInfo> {
         // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
-        let mut rfc_read_table = self.connection.get_function("RFC_READ_TABLE").expect("RFC_READ_TABLE");
+        let mut rfc_read_table = self.connection.get_function("Z_MTC_TABLE_READER").expect("Z_MTC_TABLE_READER");
         {
             let query_table = rfc_read_table
-                .get_mut_parameter("QUERY_TABLE")
+                .get_mut_parameter("IV_TABLE_NAME")
                 .ok_or(RfcErrorInfo::custom("unknown field QUERY_TABLE"))?;
             query_table.set_string(self.table)?;
         }
         {
             let offset = rfc_read_table
-                .get_mut_parameter("ROWSKIPS")
-                .ok_or(RfcErrorInfo::custom("unknown field ROWSKIPS"))?;
+                .get_mut_parameter("IV_OFFSET")
+                .ok_or(RfcErrorInfo::custom("unknown field IV_OFFSET"))?;
             offset.set_int(page.offset as i64)?;
         }
         {
             let size = rfc_read_table
-                .get_mut_parameter("ROWCOUNT")
-                .ok_or(RfcErrorInfo::custom("unknown field ROWCOUNT"))?;
+                .get_mut_parameter("IV_LIMIT")
+                .ok_or(RfcErrorInfo::custom("unknown field IV_LIMIT"))?;
             size.set_int(page.size as i64)?;
         }
         {
-            let sort = rfc_read_table
-                .get_mut_parameter("GET_SORTED")
-                .ok_or(RfcErrorInfo::custom("unknown field GET_SORTED"))?;
-            sort.set_int(1)?;
-        }
-        {
             let delimiter = rfc_read_table
-                .get_mut_parameter("DELIMITER")
-                .ok_or(RfcErrorInfo::custom("unknown field DELIMITER"))?;
+                .get_mut_parameter("IV_DELIMITER")
+                .ok_or(RfcErrorInfo::custom("unknown field IV_DELIMITER"))?;
             delimiter.set_string(self.delimiter)?;
         }
-        if !self.criteria.is_empty() {
-            let option = rfc_read_table
-                .get_mut_parameter("OPTIONS")
-                .ok_or(RfcErrorInfo::custom("unknown field OPTIONS"))?;
-            option.append_rows(1)?;
-            option.first_row();
-            let idx_fieldname = option
-                .get_field_index_by_name("TEXT")?;
-            let fieldname = option
-                .get_field_by_index(idx_fieldname)?;
-            fieldname.set_string(self.criteria)?;
-        }
         if !self.fields.is_empty(){
-            let fields = rfc_read_table.get_mut_parameter("FIELDS")
+            let fields = rfc_read_table.get_mut_parameter("IT_FIELDS")
                 .ok_or(RfcErrorInfo::custom("unknown field FIELDNAME"))?;
-            let idx_fieldname = fields
-                .get_field_index_by_name("FIELDNAME")?;
+            let idx_fieldname = 0;
             fields.append_rows(self.fields.len() as u32 + 1_u32)?;
 
             fields.first_row()?;
             let fieldname = fields.get_field_by_index(idx_fieldname)?;
             fieldname.set_string("MANDT")?;
 
-            for field in self.fields.iter() {
+            for (i, field) in self.fields.iter().enumerate() {
+                // if i == 0 {
+                //     continue;
+                // }
                 fields.next_row()?;
                 let fieldname = fields.get_field_by_index(idx_fieldname)?;
                 fieldname.set_string(field.to_uppercase().as_str())?;
@@ -135,7 +120,7 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
         rfc_read_table.call()?;
 
         // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
-        let data = rfc_read_table.get_mut_parameter("DATA").ok_or(RfcErrorInfo::custom("unknown field DATA"))?;
+        let data = rfc_read_table.get_mut_parameter("ET_DATA").ok_or(RfcErrorInfo::custom("unknown field DATA"))?;
         // WA is the single field of DATA, it ease a generic sap field name, meaning "Work Area"
         // https://www.sapdatasheet.org/abap/tabl/tab512.html
         let idx_wa = data.get_field_index_by_name("WA")?;
@@ -149,9 +134,11 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
                 .get_chars()?;
             rows.push(row_content);
         }
-
+        let total_count = rfc_read_table.get_mut_parameter("EV_TOTAL_COUNT").ok_or(RfcErrorInfo::custom("unknown field EV_TOTAL_COUNT"))?;
+        
         Ok(ResultSet{
             count: rows.len(),
+            total: total_count.get_int()? as usize,
             has_more: rows.len() >= page.size,
             rows,
         })

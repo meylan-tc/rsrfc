@@ -1,0 +1,14 @@
+IV_TABLE_NAME	TYPE	STRING	                     	                                                                               
+IT_FIELDS	TYPE	STRING_TABLE	                     	List of fields to export from table
+IV_OFFSET	TYPE	INT4	0	Offset to start read rows
+IV_LIMIT	TYPE	INT2	10000	Max number of rows to export
+IV_DELIMITER	TYPE	CHAR1	SPACE	Delimiter between fields for output
+
+
+EV_TOTAL_COUNT	TYPE	INT4	Total Number of table rows
+EV_RETURN_CODE	TYPE	SYSUBRC	Return Code
+EV_ERROR_MESSAGE	TYPE	CHAR255	Error message
+
+
+
+ET_DATA_TYPE	LIKE	TAB512	Row

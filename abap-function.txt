@@ -1,0 +1,205 @@
+FUNCTION Z_MTC_TABLE_READER .
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     VALUE(IV_TABLE_NAME) TYPE  STRING DEFAULT 'USR02'
+*"     VALUE(IT_FIELDS) TYPE  STRING_TABLE OPTIONAL
+*"     VALUE(IV_OFFSET) TYPE  INT4 DEFAULT 0
+*"     VALUE(IV_LIMIT) TYPE  INT2 DEFAULT 10000
+*"     VALUE(IV_DELIMITER) TYPE  CHAR1 DEFAULT SPACE
+*"  EXPORTING
+*"     VALUE(EV_TOTAL_COUNT) TYPE  INT4
+*"     VALUE(EV_RETURN_CODE) TYPE  SYSUBRC
+*"     VALUE(EV_ERROR_MESSAGE) TYPE  CHAR255
+*"  TABLES
+*"      ET_DATA STRUCTURE  TAB512
+*"----------------------------------------------------------------------
+
+ DATA: lt_data           TYPE REF TO data,
+        lv_where          TYPE string,
+        lv_fields         TYPE string,
+        lv_order_by       TYPE string,
+        lv_count          TYPE i,
+        lv_tabname_upper  TYPE tabname,
+        lv_field_upper    TYPE string,
+        lv_table_pattern  TYPE string,
+        lv_error          TYPE abap_bool,
+        lv_line           TYPE string,
+        lv_value          TYPE string.
+
+  FIELD-SYMBOLS: <lt_data> TYPE ANY TABLE,
+                 <ls_data> TYPE any,
+                 <field>   TYPE any.
+
+  " Initialize return code and tables
+  ev_return_code = 0.
+  REFRESH et_data.
+
+  " Check if fields parameter is empty
+  IF it_fields IS INITIAL.
+    ev_return_code = 4.
+    ev_error_message = 'Field list cannot be empty. At least one field must be specified.'.
+    RETURN.
+  ENDIF.
+
+  " Convert table name to uppercase for consistency and security
+  lv_tabname_upper = to_upper( iv_table_name ).
+
+  IF lv_tabname_upper <> 'USR02' AND
+     lv_tabname_upper <> 'AGR_DEFINE' AND
+     lv_tabname_upper <> 'AGR_AGRS' AND
+     lv_tabname_upper <> 'AGR_USERS' AND
+     lv_tabname_upper <> 'AGR_1251' AND
+     lv_tabname_upper <> 'AGR_1252'.
+    ev_return_code = 6.
+    ev_error_message = 'Access to this table is not allowed through this function module.'.
+    RETURN.
+  ENDIF.
+
+  " Prepare WHERE condition for specific tables
+  CASE lv_tabname_upper.
+    WHEN 'USR02'.
+      lv_where = 'UFLAG = 0'.
+    WHEN OTHERS.
+      " No specific filtering for other tables
+  ENDCASE.
+
+  " Prepare field list for selection with security validation
+  CLEAR lv_fields.
+  lv_error = abap_false.
+
+  " Validate field names against SQL injection and build fields table
+  LOOP AT it_fields INTO DATA(lv_field).
+    " Convert to uppercase for consistency
+    lv_field_upper = to_upper( lv_field ).
+
+    " Validate field name format - only allow alphanumeric and underscore
+    lv_table_pattern = '^[A-Z0-9_]+$'.
+    FIND REGEX lv_table_pattern IN lv_field_upper.
+    IF sy-subrc <> 0.
+      lv_error = abap_true.
+      EXIT.
+    ENDIF.
+
+    " Append field to the list
+    IF lv_fields IS INITIAL.
+      lv_fields = lv_field_upper.
+    ELSE.
+      CONCATENATE lv_fields lv_field_upper INTO lv_fields SEPARATED BY ', '.
+    ENDIF.
+  ENDLOOP.
+
+  " Check if any field validation failed
+  IF lv_error = abap_true.
+    ev_return_code = 7.
+    ev_error_message = 'Invalid field name format. Only alphanumeric characters and underscores are allowed.'.
+    RETURN.
+  ENDIF.
+
+  " Set ORDER BY clause - always use the first validated field
+  READ TABLE it_fields INTO lv_field INDEX 1.
+  IF sy-subrc = 0.
+    lv_order_by = to_upper( lv_field ).
+  ENDIF.
+
+  " Create internal table for data
+  CREATE DATA lt_data TYPE TABLE OF (lv_tabname_upper).
+  ASSIGN lt_data->* TO <lt_data>.
+
+  " First, count total records using secure bind variables
+  TRY.
+      IF lv_where IS INITIAL.
+        SELECT COUNT(*)
+          FROM (lv_tabname_upper)
+          INTO @lv_count.
+      ELSE.
+        SELECT COUNT(*)
+          FROM (lv_tabname_upper)
+          WHERE (lv_where)
+          INTO @lv_count.
+      ENDIF.
+    CATCH cx_sy_dynamic_osql_error INTO DATA(lo_dyn_err).
+      ev_return_code = 2.
+      ev_error_message = lo_dyn_err->get_text( ).
+      RETURN.
+  ENDTRY.
+
+  " Store total count
+  ev_total_count = lv_count.
+
+  " Execute main dynamic query with pagination using secure bind variables for offset and limit
+  TRY.
+      IF lv_where IS INITIAL.
+        SELECT (lv_fields)
+          FROM (lv_tabname_upper)
+          ORDER BY (lv_order_by)
+          INTO CORRESPONDING FIELDS OF TABLE @<lt_data>
+          OFFSET @iv_offset UP TO @iv_limit ROWS.
+      ELSE.
+        SELECT (lv_fields)
+          FROM (lv_tabname_upper)
+          WHERE (lv_where)
+          ORDER BY (lv_order_by)
+          INTO CORRESPONDING FIELDS OF TABLE @<lt_data>
+          OFFSET @iv_offset UP TO @iv_limit ROWS.
+      ENDIF.
+    CATCH cx_sy_dynamic_osql_error INTO DATA(lo_main_err).
+      ev_return_code = 3.
+      ev_error_message = lo_main_err->get_text( ).
+      RETURN.
+  ENDTRY.
+
+  " First row: add field names as header
+  CLEAR lv_line.
+  LOOP AT it_fields INTO lv_field.
+    lv_field_upper = to_upper( lv_field ).
+    " Build header line with field names
+    IF lv_line IS INITIAL.
+      lv_line = lv_field_upper.
+    ELSE.
+      CONCATENATE lv_line lv_field_upper INTO lv_line SEPARATED BY iv_delimiter.
+    ENDIF.
+  ENDLOOP.
+
+  " Add header row to output
+  APPEND INITIAL LINE TO et_data ASSIGNING FIELD-SYMBOL(<ls_data_out>).
+  <ls_data_out>-WA = lv_line.
+
+  " Convert data to delimited strings for output
+  LOOP AT <lt_data> ASSIGNING <ls_data>.
+    " Initialize line
+    CLEAR lv_line.
+
+    " Build delimited string with all fields
+    LOOP AT it_fields INTO lv_field.
+      lv_field_upper = to_upper( lv_field ).
+      ASSIGN COMPONENT lv_field_upper OF STRUCTURE <ls_data> TO <field>.
+      IF sy-subrc = 0.
+        " Convert to string - handle different data types
+        lv_value = <field>.
+
+        " Escape delimiter character if it exists in the value
+        REPLACE ALL OCCURRENCES OF iv_delimiter IN lv_value WITH '\' && iv_delimiter.
+
+        " Append to line with delimiter
+        IF lv_line IS INITIAL.
+          lv_line = lv_value.
+        ELSE.
+          CONCATENATE lv_line lv_value INTO lv_line SEPARATED BY iv_delimiter.
+        ENDIF.
+      ELSE.
+        " Field not found - add empty value
+        IF lv_line IS INITIAL.
+          lv_line = ''.
+        ELSE.
+          CONCATENATE lv_line '' INTO lv_line SEPARATED BY iv_delimiter.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+
+    " Add line to result table
+    APPEND INITIAL LINE TO et_data ASSIGNING <ls_data_out>.
+    <ls_data_out>-WA = lv_line.
+  ENDLOOP.
+
+ENDFUNCTION.

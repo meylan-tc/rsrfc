@@ -714,6 +714,42 @@ impl<'conn, 'strct: 'conn> RfcParameter<'conn, 'strct> {
         Ok(s)
     }
 
+    pub fn get_int(&self) -> Result<i64, RfcErrorInfo> {
+        if !self.direction.can_read() {
+            return Err(RfcErrorInfo::custom("Read-only parameter"));
+        }
+
+        /*
+        if &self.field_type != &RfcType::String && &self.field_type != &RfcType::XString {
+            return Err(RfcErrorInfo::custom(
+                "Not of type STRING or XSTRING; cannot use get_string",
+            ));
+        }
+        */
+
+        let mut err_trunk = RfcErrorInfo::new();
+        let mut value = 0;
+        {
+            let res = unsafe {
+                self.rfc_api.RfcGetIntByIndex(self.fun, self.index, &mut value, &mut err_trunk)
+            };
+            if !res.is_ok() {
+                return Err(err_trunk);
+            }
+        }
+
+        let s = value;
+        // if let Err(e) = s {
+        //     return Err(RfcErrorInfo::custom(&e.to_string()));
+        // }
+        // let s = s.unwrap().to_string();
+        // if let Err(e) = s {
+        //     return Err(RfcErrorInfo::custom(&e.to_string()));
+        // }
+        // let s = s.unwrap();
+        Ok(s)
+    }
+
     pub fn set_xstring(&mut self, v: &[u8]) -> Result<(), RfcErrorInfo> {
         if !self.direction.can_write() {
             return Err(RfcErrorInfo::custom("Read-only parameter"));
@@ -813,6 +849,14 @@ pub struct RfcApi {
         index: u32,
         value: *mut u16,
         length: u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc,
+
+    #[allow(non_snake_case)]
+    RfcGetIntByIndex: unsafe extern "C" fn(
+        handle: *mut RfcDataContainerHandle,
+        index: u32,
+        value: *mut i64,
         error: *mut RfcErrorInfo,
     ) -> RfcRc,
 

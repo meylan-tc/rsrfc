@@ -1,5 +1,7 @@
 extern crate rsrfc;
 
+use std::any::Any;
+use std::io::stdout;
 use rsrfc::*;
 use rsrfc::error::RfcErrorInfo;
 use rsrfc::rfc_helper::{Page, RfcReadTable};
@@ -42,12 +44,14 @@ fn main() -> Result<(), RfcErrorInfo>{
     let mut has_more = true;
     let mut total = 0;
     let mut iteration = 0;
-    let size = 180000;
+    let size = 10000;
     while(has_more) {
         let resultset = rfc_read_table.fetch(Page::new().size(size).offset(iteration * size))?;
         for row in resultset.rows.iter() {
             println!("---{}----", row.trim_end());
         }
+        println!("total {}", resultset.total);
+        break;
         total += resultset.count;
         iteration += 1;
         has_more = resultset.has_more;
