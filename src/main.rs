@@ -40,26 +40,26 @@ fn main() -> Result<(), RfcErrorInfo>{
     }
     println!("{}", resultset.count);
     println!("{}", resultset.total);
-    // let rfc_read_table = RfcReadTable::new(&conn, "AGR_1251").fields(vec!["AGR_NAME", "OBJECT", "AUTH", "FIELD", "LOW", "HIGH", "DELETED"])
-    //     // .criteria("DELETED <> 'X'")
-    //     ;
-    // let mut has_more = true;
-    // let mut total = 0;
-    // let mut total_rs = 0;
-    // let mut iteration = 0;
-    // let size = 10000;
-    // while(has_more) {
-    //     let resultset = rfc_read_table.fetch(Page::new().size(size).offset(iteration * size))?;
-    //     // for row in resultset.rows.iter() {
-    //     //     println!("---{}----", row.trim_end());
-    //     // }
-    //     println!("agr_1251: {}", resultset.count);
-    //     total += resultset.count;
-    //     iteration += 1;
-    //     has_more = resultset.has_more;
-    //     total_rs = resultset.total;
-    // }
-    // println!("total {}", total_rs);
+    let rfc_read_table = RfcReadTable::new(&conn, "AGR_1251").fields(vec!["AGR_NAME", "OBJECT", "AUTH", "FIELD", "LOW", "HIGH", "DELETED"]).export_deleted_rows(true)
+        // .criteria("DELETED <> 'X'")
+        ;
+    let mut has_more = true;
+    let mut total = 0;
+    let mut total_rs = 0;
+    let mut iteration = 0;
+    let size = 10000;
+    while(has_more) {
+        let resultset = rfc_read_table.fetch(Page::new().size(size).offset(iteration * size))?;
+        // for row in resultset.rows.iter() {
+        //     println!("---{}----", row.trim_end());
+        // }
+        println!("agr_1251: {}", resultset.count);
+        total += resultset.count;
+        iteration += 1;
+        has_more = resultset.has_more;
+        total_rs = resultset.total;
+    }
+    println!("total {}", total_rs);
 
     // {
     //     // Get the RFC_READ_TABLE function

@@ -8,6 +8,7 @@ FUNCTION Z_MTC_TABLE_READER .
 *"     VALUE(IV_LIMIT) TYPE  INT4 DEFAULT 10000
 *"     VALUE(IV_DELIMITER) TYPE  CHAR1 DEFAULT SPACE
 *"     VALUE(IV_RETURN_COUNT) TYPE  BOOL DEFAULT 'X'
+*"     VALUE(IV_RETURN_DELETED_ROWS) TYPE  BOOL DEFAULT 'X'
 *"  EXPORTING
 *"     VALUE(EV_TOTAL_COUNT) TYPE  INT4
 *"     VALUE(EV_RETURN_CODE) TYPE  SYSUBRC
@@ -23,7 +24,7 @@ FUNCTION Z_MTC_TABLE_READER .
         lv_count          TYPE i,
         lv_tabname_upper  TYPE tabname,
         lv_field_upper    TYPE string,
-        lv_table_pattern  TYPE string,
+        lv_field_pattern  TYPE string,
         lv_error          TYPE abap_bool,
         lv_line           TYPE string,
         lv_value          TYPE string.
@@ -55,6 +56,7 @@ FUNCTION Z_MTC_TABLE_READER .
      lv_tabname_upper <> 'CDHDR' AND
      lv_tabname_upper <> 'CDPOS' AND
      lv_tabname_upper <> 'DBTABLOG' AND
+     lv_tabname_upper <> 'AGR_1251' AND
      lv_tabname_upper <> 'AGR_1252'.
     ev_return_code = 6.
     ev_error_message = 'Access to this table is not allowed through this function module.'.
@@ -62,12 +64,18 @@ FUNCTION Z_MTC_TABLE_READER .
   ENDIF.
 
   " Prepare WHERE condition for specific tables
-  CASE lv_tabname_upper.
-    WHEN 'USR02'.
-      lv_where = 'UFLAG = 0'.
-    WHEN OTHERS.
-      " No specific filtering for other tables
-  ENDCASE.
+  IF iv_return_deleted_rows = abap_false.
+    CASE lv_tabname_upper.
+      WHEN 'USR02'.
+        lv_where = 'UFLAG = 0'.
+      WHEN 'AGR_USERS'.
+        lv_where = 'COL_FLAG <> ''X'''.
+      WHEN 'AGR_1251'.
+        lv_where = 'DELETED <> ''X'''.
+      WHEN OTHERS.
+        " No specific filtering for other tables
+    ENDCASE.
+  ENDIF.
 
   " Prepare field list for selection with security validation
   CLEAR lv_fields.
@@ -79,8 +87,8 @@ FUNCTION Z_MTC_TABLE_READER .
     lv_field_upper = to_upper( lv_field ).
 
     " Validate field name format - only allow alphanumeric and underscore
-    lv_table_pattern = '^[A-Z0-9_]+$'.
-    FIND REGEX lv_table_pattern IN lv_field_upper.
+    lv_field_pattern = '^[A-Z0-9_]+$'.
+    FIND REGEX lv_field_pattern IN lv_field_upper.
     IF sy-subrc <> 0.
       lv_error = abap_true.
       EXIT.

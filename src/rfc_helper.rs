@@ -1,7 +1,7 @@
-use std::vec;
-use log::log;
-use crate::error::RfcErrorInfo;
 use crate::RfcConnection;
+use crate::error::RfcErrorInfo;
+use log::log;
+use std::vec;
 
 pub struct ResultSet {
     pub rows: Vec<String>,
@@ -13,7 +13,7 @@ pub struct ResultSet {
 #[derive(Copy, Clone)]
 pub struct Page {
     size: usize,
-    offset: usize
+    offset: usize,
 }
 
 impl Page {
@@ -39,10 +39,11 @@ pub struct RfcReadTable<'a, 'conn> {
     delimiter: &'a str,
     criteria: &'a str,
     return_count: bool,
-    connection: &'conn RfcConnection<'conn>
+    export_deleted_rows: bool,
+    connection: &'conn RfcConnection<'conn>,
 }
 
-impl <'a, 'conn> RfcReadTable<'a, 'conn> {
+impl<'a, 'conn> RfcReadTable<'a, 'conn> {
     pub fn new(connection: &'conn RfcConnection<'conn>, table: &'a str) -> Self {
         Self {
             table,
@@ -50,6 +51,7 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
             delimiter: "\t",
             criteria: "",
             return_count: true,
+            export_deleted_rows: false,
             connection,
         }
     }
@@ -74,10 +76,18 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
         self.return_count = return_count;
         self
     }
+    #[inline]
+    pub fn export_deleted_rows(mut self, export_deleted_rows: bool) -> Self {
+        self.export_deleted_rows = export_deleted_rows;
+        self
+    }
 
     pub fn fetch(&self, page: Page) -> Result<ResultSet, RfcErrorInfo> {
         // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
-        let mut rfc_read_table = self.connection.get_function("Z_MTC_TABLE_READER").expect("Z_MTC_TABLE_READER");
+        let mut rfc_read_table = self
+            .connection
+            .get_function("Z_MTC_TABLE_READER")
+            .expect("Z_MTC_TABLE_READER");
         {
             let query_table = rfc_read_table
                 .get_mut_parameter("IV_TABLE_NAME")
@@ -88,7 +98,13 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
             let return_count = rfc_read_table
                 .get_mut_parameter("IV_RETURN_COUNT")
                 .ok_or(RfcErrorInfo::custom("unknown field IV_RETURN_COUNT"))?;
-            return_count.set_string(if self.return_count { "X"} else {""})?;
+            return_count.set_string(if self.return_count { "X" } else { "" })?;
+        }
+        {
+            let export_deleted_rows = rfc_read_table
+                .get_mut_parameter("IV_RETURN_DELETED_ROWS")
+                .ok_or(RfcErrorInfo::custom("unknown field IV_RETURN_DELETED_ROWS"))?;
+            export_deleted_rows.set_string(if self.export_deleted_rows { "X" } else { "" })?;
         }
         {
             let offset = rfc_read_table
@@ -108,8 +124,9 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
                 .ok_or(RfcErrorInfo::custom("unknown field IV_DELIMITER"))?;
             delimiter.set_string(self.delimiter)?;
         }
-        if !self.fields.is_empty(){
-            let fields = rfc_read_table.get_mut_parameter("IT_FIELDS")
+        if !self.fields.is_empty() {
+            let fields = rfc_read_table
+                .get_mut_parameter("IT_FIELDS")
                 .ok_or(RfcErrorInfo::custom("unknown field FIELDNAME"))?;
             let idx_fieldname = 0;
             fields.append_rows(self.fields.len() as u32 + 1_u32)?;
@@ -133,23 +150,25 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
         rfc_read_table.call()?;
 
         // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
-        let data = rfc_read_table.get_mut_parameter("ET_DATA").ok_or(RfcErrorInfo::custom("unknown field DATA"))?;
+        let data = rfc_read_table
+            .get_mut_parameter("ET_DATA")
+            .ok_or(RfcErrorInfo::custom("unknown field DATA"))?;
         // WA is the single field of DATA, it ease a generic sap field name, meaning "Work Area"
         // https://www.sapdatasheet.org/abap/tabl/tab512.html
         let idx_wa = data.get_field_index_by_name("WA")?;
 
         let rows_count = data.get_row_count()?;
         let mut rows = Vec::with_capacity(rows_count as usize);
-            for i in 0..rows_count {
+        for i in 0..rows_count {
             data.set_row(i)?;
-            let row_content = data
-                .get_field_by_index(idx_wa)?
-                .get_chars()?;
+            let row_content = data.get_field_by_index(idx_wa)?.get_chars()?;
             rows.push(row_content);
         }
-        let total_count = rfc_read_table.get_mut_parameter("EV_TOTAL_COUNT").ok_or(RfcErrorInfo::custom("unknown field EV_TOTAL_COUNT"))?;
-        
-        Ok(ResultSet{
+        let total_count = rfc_read_table
+            .get_mut_parameter("EV_TOTAL_COUNT")
+            .ok_or(RfcErrorInfo::custom("unknown field EV_TOTAL_COUNT"))?;
+
+        Ok(ResultSet {
             count: rows.len(),
             total: total_count.get_int()? as usize,
             has_more: rows.len() >= page.size,
