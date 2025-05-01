@@ -9,6 +9,7 @@ FUNCTION Z_MTC_TABLE_READER .
 *"     VALUE(IV_DELIMITER) TYPE  CHAR1 DEFAULT SPACE
 *"     VALUE(IV_RETURN_COUNT) TYPE  BOOL DEFAULT 'X'
 *"     VALUE(IV_RETURN_DELETED_ROWS) TYPE  BOOL DEFAULT 'X'
+*"     VALUE(IV_ORDER_BY_FIELD_INDEX) TYPE  INT4 DEFAULT 1
 *"  EXPORTING
 *"     VALUE(EV_TOTAL_COUNT) TYPE  INT4
 *"     VALUE(EV_RETURN_CODE) TYPE  SYSUBRC
@@ -110,7 +111,7 @@ FUNCTION Z_MTC_TABLE_READER .
   ENDIF.
 
   " Set ORDER BY clause - always use the first validated field
-  READ TABLE it_fields INTO lv_field INDEX 2.
+  READ TABLE it_fields INTO lv_field INDEX iv_order_by_field_index.
   IF sy-subrc = 0.
     lv_order_by = to_upper( lv_field ).
   ENDIF.

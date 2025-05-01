@@ -50,10 +50,9 @@ fn main() -> Result<(), RfcErrorInfo>{
     let size = 10000;
     while(has_more) {
         let resultset = rfc_read_table.fetch(Page::new().size(size).offset(iteration * size))?;
-        // for row in resultset.rows.iter() {
-        //     println!("---{}----", row.trim_end());
-        // }
-        println!("agr_1251: {}", resultset.count);
+        for row in resultset.rows.iter() {
+            println!("---{}----", row.trim_end());
+        }
         total += resultset.count;
         iteration += 1;
         has_more = resultset.has_more;

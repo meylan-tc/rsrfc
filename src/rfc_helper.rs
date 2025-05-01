@@ -39,6 +39,7 @@ pub struct RfcReadTable<'a, 'conn> {
     delimiter: &'a str,
     criteria: &'a str,
     return_count: bool,
+    order_by_index: u8,
     export_deleted_rows: bool,
     connection: &'conn RfcConnection<'conn>,
 }
@@ -51,6 +52,7 @@ impl<'a, 'conn> RfcReadTable<'a, 'conn> {
             delimiter: "\t",
             criteria: "",
             return_count: true,
+            order_by_index: 2,
             export_deleted_rows: false,
             connection,
         }
@@ -81,6 +83,11 @@ impl<'a, 'conn> RfcReadTable<'a, 'conn> {
         self.export_deleted_rows = export_deleted_rows;
         self
     }
+    #[inline]
+    pub fn order_by_index(mut self, order_by_index: u8) -> Self {
+        self.order_by_index = order_by_index;
+        self
+    }
 
     pub fn fetch(&self, page: Page) -> Result<ResultSet, RfcErrorInfo> {
         // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
@@ -105,6 +112,12 @@ impl<'a, 'conn> RfcReadTable<'a, 'conn> {
                 .get_mut_parameter("IV_RETURN_DELETED_ROWS")
                 .ok_or(RfcErrorInfo::custom("unknown field IV_RETURN_DELETED_ROWS"))?;
             export_deleted_rows.set_string(if self.export_deleted_rows { "X" } else { "" })?;
+        }
+        {
+            let order_by_index = rfc_read_table
+                .get_mut_parameter("IV_ORDER_BY_FIELD_INDEX")
+                .ok_or(RfcErrorInfo::custom("unknown field IV_ORDER_BY_FIELD_INDEX"))?;
+            order_by_index.set_int(self.order_by_index as i64)?;
         }
         {
             let offset = rfc_read_table

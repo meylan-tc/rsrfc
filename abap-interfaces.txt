@@ -5,7 +5,7 @@ IV_LIMIT	TYPE	INT4	10000	Max number of rows to export
 IV_DELIMITER	TYPE	CHAR1	SPACE	Delimiter between fields for output
 IV_RETURN_COUNT	TYPE	BOOL	'X'	Should return total rows count
 IV_RETURN_DELETED_ROWS	TYPE	BOOL	'X'	Should return deleted rows (depends on the table to export)
-
+IV_ORDER_BY_FIELD_INDEX	TYPE	INT4	1	Index of field to order by
 
 EV_TOTAL_COUNT	TYPE	INT4	Total Number of table rows
 EV_RETURN_CODE	TYPE	SYSUBRC	Return Code
