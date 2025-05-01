@@ -38,6 +38,7 @@ pub struct RfcReadTable<'a, 'conn> {
     fields: Vec<&'a str>,
     delimiter: &'a str,
     criteria: &'a str,
+    return_count: bool,
     connection: &'conn RfcConnection<'conn>
 }
 
@@ -48,6 +49,7 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
             fields: vec![],
             delimiter: "\t",
             criteria: "",
+            return_count: true,
             connection,
         }
     }
@@ -67,6 +69,11 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
         self.criteria = criteria;
         self
     }
+    #[inline]
+    pub fn return_count(mut self, return_count: bool) -> Self {
+        self.return_count = return_count;
+        self
+    }
 
     pub fn fetch(&self, page: Page) -> Result<ResultSet, RfcErrorInfo> {
         // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
@@ -76,6 +83,12 @@ impl <'a, 'conn> RfcReadTable<'a, 'conn> {
                 .get_mut_parameter("IV_TABLE_NAME")
                 .ok_or(RfcErrorInfo::custom("unknown field QUERY_TABLE"))?;
             query_table.set_string(self.table)?;
+        }
+        {
+            let return_count = rfc_read_table
+                .get_mut_parameter("IV_RETURN_COUNT")
+                .ok_or(RfcErrorInfo::custom("unknown field IV_RETURN_COUNT"))?;
+            return_count.set_string(if self.return_count { "X"} else {""})?;
         }
         {
             let offset = rfc_read_table
