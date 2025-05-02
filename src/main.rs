@@ -31,7 +31,10 @@ fn main() -> Result<(), RfcErrorInfo>{
         Ok(c) => c
     };
 
-    eprintln!("Fetching user names...");
+    let version = RfcReadTable::new(&conn, "MTC_PING").ping()?;
+    
+
+    eprintln!("Version {version}");
 
     let rfc_read_table = RfcReadTable::new(&conn, "USR02").fields(vec!["BNAME", "USTYP", "CLASS", "GLTGV", "GLTGB", "UFLAG"]).return_count(false);
     let resultset = rfc_read_table.fetch(Page::new())?;

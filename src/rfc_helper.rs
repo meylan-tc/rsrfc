@@ -88,6 +88,25 @@ impl<'a, 'conn> RfcReadTable<'a, 'conn> {
         self.order_by_index = order_by_index;
         self
     }
+    
+    pub fn ping(&self) -> Result<i64, RfcErrorInfo>{
+        let mut rfc_read_table = self
+            .connection
+            .get_function("Z_MTC_TABLE_READER")
+            .expect("Z_MTC_TABLE_READER");
+        {
+            let query_table = rfc_read_table
+                .get_mut_parameter("IV_TABLE_NAME")
+                .ok_or(RfcErrorInfo::custom("unknown field IV_TABLE_NAME"))?;
+            query_table.set_string(self.table)?;
+        }
+        rfc_read_table.call()?;
+
+        let data = rfc_read_table
+            .get_mut_parameter("EV_VERSION")
+            .ok_or(RfcErrorInfo::custom("unknown field EV_VERSION"))?;
+        data.get_int()
+    }
 
     pub fn fetch(&self, page: Page) -> Result<ResultSet, RfcErrorInfo> {
         // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
@@ -98,7 +117,7 @@ impl<'a, 'conn> RfcReadTable<'a, 'conn> {
         {
             let query_table = rfc_read_table
                 .get_mut_parameter("IV_TABLE_NAME")
-                .ok_or(RfcErrorInfo::custom("unknown field QUERY_TABLE"))?;
+                .ok_or(RfcErrorInfo::custom("unknown field IV_TABLE_NAME"))?;
             query_table.set_string(self.table)?;
         }
         {
@@ -162,7 +181,6 @@ impl<'a, 'conn> RfcReadTable<'a, 'conn> {
 
         rfc_read_table.call()?;
 
-        // https://www.sapdatasheet.org/abap/func/rfc_read_table.html
         let data = rfc_read_table
             .get_mut_parameter("ET_DATA")
             .ok_or(RfcErrorInfo::custom("unknown field DATA"))?;

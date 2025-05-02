@@ -168,11 +168,9 @@ impl <'conn> RfcFieldDesc<'conn> {
         index: u32,
         fun: *mut RfcDataContainerHandle,
     ) -> Result<RfcParameter<'conn, 'strct>, RfcErrorInfo> {
-        let name_s = unsafe { U16CString::from_ptr_with_nul(self.name.as_ptr(), 31) };
-        if let Err(e) = name_s {
-            return Err(RfcErrorInfo::custom(&e.to_string()));
-        }
-        let name_s = name_s.unwrap().to_string();
+        let name_s = unsafe { U16CString::from_ptr_truncate(self.name.as_ptr(), 31) };
+       
+        let name_s = name_s.to_string();
         if let Err(e) = name_s {
             return Err(RfcErrorInfo::custom(&e.to_string()));
         }
@@ -267,25 +265,20 @@ impl <'conn>RfcParameterDesc<'conn> {
         index: u32,
         fun: *mut RfcDataContainerHandle,
     ) -> Result<RfcParameter<'conn, 'strct>, RfcErrorInfo> {
-        let name_s = unsafe { U16CString::from_ptr_with_nul(self.name.as_ptr(), 31) };
-        if let Err(e) = name_s {
-            return Err(RfcErrorInfo::custom(&e.to_string()));
-        }
-        let name_s = name_s.unwrap().to_string();
+        let name_s = unsafe { U16CString::from_ptr_truncate(self.name.as_ptr(), 31) };
+       
+        let name_s = name_s.to_string();
         if let Err(e) = name_s {
             return Err(RfcErrorInfo::custom(&e.to_string()));
         }
         let name_s = name_s.unwrap();
-
         let default_value = if self.default_value[0] == 0 {
             None
         } else {
             let default_value_s =
-                unsafe { U16CString::from_ptr_with_nul(self.default_value.as_ptr(), 31) };
-            if let Err(e) = default_value_s {
-                return Err(RfcErrorInfo::custom(&e.to_string()));
-            }
-            let default_value_s = default_value_s.unwrap().to_string();
+                unsafe { U16CString::from_ptr_truncate(self.default_value.as_ptr(), 31) };
+            
+            let default_value_s = default_value_s.to_string();
             if let Err(e) = default_value_s {
                 return Err(RfcErrorInfo::custom(&e.to_string()));
             }
@@ -384,8 +377,7 @@ impl<'conn, 'strct: 'conn> RfcDecodedFieldDesc<'conn, 'strct> {
                     return Err(err_trunk);
                 }
                 let name = unsafe {
-                    U16CString::from_ptr_with_nul(rfc_field_desc.name.as_ptr(), 31)
-                        .unwrap()
+                    U16CString::from_ptr_truncate(rfc_field_desc.name.as_ptr(), 31)
                         .to_string_lossy()
                 };
                 let sub_fields = if rfc_field_desc.type_desc_handle.is_null() {
