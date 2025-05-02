@@ -67,36 +67,31 @@ pub struct RfcLib {
 
 
 impl RfcLib {
-    #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
-    pub fn new() -> Result<RfcLib, String> {
-        let rfc_api : dlopen::wrapper::Container<crate::rfc::RfcApi> = unsafe {
-            dlopen::wrapper::Container::load("libsapnwrfc.so")
-        }.map_err(|e| {
-            format!("Error trying to load libsapnwrfc: {:?}", e)
-        })?;
-        Ok(RfcLib {
-            rfc_api
-        })
-    }
+    
+    pub fn library_name() -> &'static str {
+        #[cfg(all(target_family = "unix", not(target_vendor = "apple")))]
+        {
+            return "libsapnwrfc.so"
+        }
+        
+        #[cfg(all(target_family = "unix", target_vendor = "apple"))]
+        {
+            return "libsapnwrfc.dylib"
+        }
 
-    #[cfg(all(target_family = "unix", target_vendor = "apple"))]
-    pub fn new() -> Result<RfcLib, String> {
-        let rfc_api : dlopen::wrapper::Container<crate::rfc::RfcApi> = unsafe {
-            dlopen::wrapper::Container::load("libsapnwrfc.dylib")
-        }.map_err(|e| {
-            format!("Error trying to load libsapnwrfc: {:?}", e)
-        })?;
-        Ok(RfcLib {
-            rfc_api
-        })
+        #[cfg(target_family = "windows")]
+        {
+            return "sapnwrfc.dll"
+        }
+        ""
     }
+    
 
-    #[cfg(target_family = "windows")]
     pub fn new() -> Result<RfcLib, String> {
         let rfc_api : dlopen::wrapper::Container<crate::rfc::RfcApi> = unsafe {
-            dlopen::wrapper::Container::load("sapnwrfc.dll")
+            dlopen::wrapper::Container::load(Self::library_name())
         }.map_err(|e| {
-            format!("Error trying to load libsapnwrfc: {:?}", e)
+            format!("Error trying to load {}: {:?}", Self::library_name(), e)
         })?;
         Ok(RfcLib {
             rfc_api
