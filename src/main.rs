@@ -12,7 +12,7 @@ fn main() -> Result<(), RfcErrorInfo>{
         sysnr: "00",
         client: "000",
         user: "SAP*",
-        passwd: "ABAPtr2022#01",
+        passwd: "ABAPtr2023#00",
         lang: "EN",
     };
 

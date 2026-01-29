@@ -14,7 +14,6 @@ name = "rsrfctest"
 path = "src/main.rs"
 
 [dependencies]
-dlopen = "*"
-dlopen_derive = "*"
+dlopen2 = { version = "0.8.2", default-features = false, features = ["wrapper", "symbor"] }
 widestring = "^1.2.0"
 log = "*"

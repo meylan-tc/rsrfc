@@ -1,6 +1,4 @@
-extern crate dlopen;
-#[macro_use]
-extern crate dlopen_derive;
+use dlopen2::wrapper::{Container, WrapperApi};
 extern crate widestring;
 
 use std::collections::HashMap;
@@ -62,7 +60,7 @@ pub struct RfcFunction<'conn, 'fun: 'conn> {
     /// RfcConnectinoParameters would allow you, use from_parm_helper or from_hashmap
     /// methods instead.
 pub struct RfcLib {
-    rfc_api: dlopen::wrapper::Container<crate::rfc::RfcApi>
+    rfc_api: Container<crate::rfc::RfcApi>
 }
 
 
@@ -88,8 +86,8 @@ impl RfcLib {
     
 
     pub fn new() -> Result<RfcLib, String> {
-        let rfc_api : dlopen::wrapper::Container<crate::rfc::RfcApi> = unsafe {
-            dlopen::wrapper::Container::load(Self::library_name())
+        let rfc_api: Container<crate::rfc::RfcApi> = unsafe {
+            Container::load(Self::library_name())
         }.map_err(|e| {
             format!("Error trying to load {}: {:?}", Self::library_name(), e)
         })?;

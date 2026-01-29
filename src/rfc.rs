@@ -1,4 +1,4 @@
-use dlopen::wrapper::{Container, WrapperApi};
+use dlopen2::wrapper::{Container, WrapperApi};
 use std::marker::PhantomData;
 use std::ptr::null_mut;
 
@@ -813,7 +813,6 @@ impl<'conn, 'strct: 'conn> RfcParameter<'conn, 'strct> {
 }
 
 #[allow(non_snake_case)]
-#[derive(WrapperApi)]
 pub struct RfcApi {
     #[allow(non_snake_case)]
     RfcOpenConnection: unsafe extern "C" fn(
@@ -1014,4 +1013,414 @@ pub struct RfcApi {
 
     #[allow(non_snake_case)]
     RfcCloseConnection: unsafe extern "C" fn (handle: *mut RfcConnectionHandle, error: *mut RfcErrorInfo) -> RfcRc
+}
+impl WrapperApi for RfcApi {
+    unsafe fn load(
+        lib: &::dlopen2::raw::Library,
+    ) -> ::std::result::Result<Self, ::dlopen2::Error> {
+        Ok(Self {
+            RfcOpenConnection: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcOpenConnection\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetFunctionDesc: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetFunctionDesc\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcCreateFunction: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcCreateFunction\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetCharsByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetCharsByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetIntByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetIntByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcSetCharsByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcSetCharsByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcSetIntByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcSetIntByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcInvoke: lib.symbol_cstr(::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                "RfcInvoke\u{0}".as_bytes(),
+            ))?,
+            RfcGetStructureByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetStructureByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetTableByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetTableByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetStringByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetStringByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetStringLengthByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetStringLengthByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcSetXStringByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcSetXStringByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetXStringByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetXStringByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcDescribeType: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcDescribeType\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetFieldCount: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetFieldCount\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetParameterCount: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetParameterCount\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetFieldDescByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetFieldDescByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcGetParameterDescByIndex: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetParameterDescByIndex\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcDestroyFunction: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcDestroyFunction\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcMoveToFirstRow: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcMoveToFirstRow\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcMoveToLastRow: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcMoveToLastRow\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcMoveToNextRow: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcMoveToNextRow\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcMoveToPreviousRow: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcMoveToPreviousRow\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcMoveTo: lib.symbol_cstr(::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                "RfcMoveTo\u{0}".as_bytes(),
+            ))?,
+            RfcGetRowCount: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcGetRowCount\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcAppendNewRows: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcAppendNewRows\u{0}".as_bytes(),
+                ),
+            )?,
+            RfcCloseConnection: lib.symbol_cstr(
+                ::std::ffi::CStr::from_bytes_with_nul_unchecked(
+                    "RfcCloseConnection\u{0}".as_bytes(),
+                ),
+            )?,
+        })
+    }
+}
+#[allow(dead_code)]
+impl RfcApi {
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcOpenConnection(
+        &self,
+        parameters: *const RfcConnectionParameter,
+        param_count: u32,
+        error: *mut RfcErrorInfo,
+    ) -> *mut RfcConnectionHandle {
+        (self.RfcOpenConnection)(parameters, param_count, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetFunctionDesc(
+        &self,
+        handle: *mut RfcConnectionHandle,
+        func_name: *const u16,
+        error: *mut RfcErrorInfo,
+    ) -> *mut RfcFunctionDescHandle {
+        (self.RfcGetFunctionDesc)(handle, func_name, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcCreateFunction(
+        &self,
+        handle: *mut RfcFunctionDescHandle,
+        error: *mut RfcErrorInfo,
+    ) -> *mut RfcDataContainerHandle {
+        (self.RfcCreateFunction)(handle, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetCharsByIndex(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        index: u32,
+        value: *mut u16,
+        length: u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetCharsByIndex)(handle, index, value, length, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetIntByIndex(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        index: u32,
+        value: *mut i64,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetIntByIndex)(handle, index, value, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcSetCharsByIndex(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        index: u32,
+        value: *const u16,
+        length: u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcSetCharsByIndex)(handle, index, value, length, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcSetIntByIndex(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        index: u32,
+        value: i64,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcSetIntByIndex)(handle, index, value, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcInvoke(
+        &self,
+        handle: *mut RfcConnectionHandle,
+        fun: *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcInvoke)(handle, fun, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetStructureByIndex(
+        &self,
+        fun: *const RfcDataContainerHandle,
+        index: u32,
+        structure: *mut *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetStructureByIndex)(fun, index, structure, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetTableByIndex(
+        &self,
+        fun: *const RfcDataContainerHandle,
+        index: u32,
+        table: *mut *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetTableByIndex)(fun, index, table, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetStringByIndex(
+        &self,
+        fun: *const RfcDataContainerHandle,
+        index: u32,
+        buf: *mut u8,
+        len: u32,
+        out_len: *mut u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetStringByIndex)(fun, index, buf, len, out_len, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetStringLengthByIndex(
+        &self,
+        fun: *const RfcDataContainerHandle,
+        index: u32,
+        len: *mut u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetStringLengthByIndex)(fun, index, len, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcSetXStringByIndex(
+        &self,
+        fun: *const RfcDataContainerHandle,
+        index: u32,
+        value: *const u8,
+        len: u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcSetXStringByIndex)(fun, index, value, len, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetXStringByIndex(
+        &self,
+        fun: *const RfcDataContainerHandle,
+        index: u32,
+        value: *mut u8,
+        buflen: u32,
+        reslen: *mut u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetXStringByIndex)(fun, index, value, buflen, reslen, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcDescribeType(
+        &self,
+        fun: *const RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> *mut RfcDataContainerHandle {
+        (self.RfcDescribeType)(fun, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetFieldCount(
+        &self,
+        tdh: *const RfcDataContainerHandle,
+        count: *mut u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetFieldCount)(tdh, count, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetParameterCount(
+        &self,
+        fd: *const RfcFunctionDescHandle,
+        count: *mut u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetParameterCount)(fd, count, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetFieldDescByIndex(
+        &self,
+        tdh: *const RfcDataContainerHandle,
+        index: u32,
+        field_desc: *mut RfcFieldDesc,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetFieldDescByIndex)(tdh, index, field_desc, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetParameterDescByIndex(
+        &self,
+        fh: *const RfcFunctionDescHandle,
+        index: u32,
+        param_desc: *mut RfcParameterDesc,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetParameterDescByIndex)(fh, index, param_desc, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcDestroyFunction(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcDestroyFunction)(handle, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcMoveToFirstRow(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcMoveToFirstRow)(handle, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcMoveToLastRow(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcMoveToLastRow)(handle, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcMoveToNextRow(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcMoveToNextRow)(handle, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcMoveToPreviousRow(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcMoveToPreviousRow)(handle, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcMoveTo(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        index: u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcMoveTo)(handle, index, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcGetRowCount(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        row_count: *mut u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcGetRowCount)(handle, row_count, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcAppendNewRows(
+        &self,
+        handle: *mut RfcDataContainerHandle,
+        row_count: u32,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcAppendNewRows)(handle, row_count, error)
+    }
+    #[allow(non_snake_case)]
+    pub unsafe fn RfcCloseConnection(
+        &self,
+        handle: *mut RfcConnectionHandle,
+        error: *mut RfcErrorInfo,
+    ) -> RfcRc {
+        (self.RfcCloseConnection)(handle, error)
+    }
 }
