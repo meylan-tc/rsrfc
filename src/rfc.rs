@@ -566,7 +566,13 @@ impl<'conn, 'strct: 'conn> RfcParameter<'conn, 'strct> {
         if !self.direction.can_write() {
             return Err(RfcErrorInfo::custom("Read-only parameter"));
         }
-        if &self.field_type == &RfcType::String || &self.field_type == &RfcType::Char {
+        // RfcSetChars accepts the character representation of any fixed
+        // char-encoded type, so date (DATS), time (TIMS), numeric text (NUMC)
+        // and packed (BCD) fields can be set from a string as well.
+        if matches!(
+            self.field_type,
+            RfcType::String | RfcType::Char | RfcType::Date | RfcType::Time | RfcType::Num | RfcType::Bcd
+        ) {
             let v = U16CString::from_str(value);
             if let Err(e) = v {
                 return Err(RfcErrorInfo::custom(&e.to_string()));
